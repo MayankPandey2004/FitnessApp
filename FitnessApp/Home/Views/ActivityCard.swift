@@ -7,15 +7,6 @@
 
 import SwiftUI
 
-struct Activity {
-    let id: Int
-    let title: String
-    let subtitle: String
-    let image: String
-    let tintColor: Color
-    let amount: String
-}
-
 struct ActivityCard: View {
     @State var activity: Activity
     
@@ -28,6 +19,8 @@ struct ActivityCard: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(activity.title)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                         
                         Text(activity.subtitle)
                             .font(.caption)
