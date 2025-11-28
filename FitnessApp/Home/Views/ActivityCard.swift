@@ -45,7 +45,6 @@ struct ActivityCard: View {
 
 #Preview {
     ActivityCard(activity: Activity(
-        id: 0,
         title: "Today Steps",
         subtitle: "Goal 12,000",
         image: "figure.walk",
