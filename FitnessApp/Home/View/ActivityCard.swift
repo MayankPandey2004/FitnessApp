@@ -7,6 +7,23 @@
 
 import SwiftUI
 
+func formatAmount(_ value: String) -> String {
+    let cleaned = value.replacingOccurrences(of: ",", with: "")
+    
+    let pattern = "[0-9]+(?:\\.[0-9]+)?"
+    
+    if let range = cleaned.range(of: pattern, options: .regularExpression) {
+        let numberString = String(cleaned[range])
+        
+        if let number = Double(numberString) {
+            return String(Int(number.rounded()))
+        }
+    }
+    return value
+}
+
+
+
 struct ActivityCard: View {
     @State var activity: Activity
     
@@ -33,10 +50,11 @@ struct ActivityCard: View {
                     
                 }
                 
-                Text(activity.amount)
+                Text(formatAmount(activity.amount))
                     .font(.title)
                     .bold()
                     .padding()
+
             }
             .padding()
         }

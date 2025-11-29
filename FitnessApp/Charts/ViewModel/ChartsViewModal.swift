@@ -32,17 +32,17 @@ class ChartsViewModel: ObservableObject {
         DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -9, to: Date())!, count: 9775)
     ]
 
-    @Published var oneWeekAverage = 0
-    @Published var oneWeekTotal = 0
+    @Published var oneWeekAverage = 25455
+    @Published var oneWeekTotal = 23456
     
     @Published var mockOneMonthData =
     [DailyStepModel]()
-    @Published var oneMonthAverage = 0
-    @Published var oneMonthTotal = 0
+    @Published var oneMonthAverage = 6567
+    @Published var oneMonthTotal = 7609
     
     @Published var mockThreeMonthData = [DailyStepModel]()
-    @Published var threeMonthAverage = 0
-    @Published var threeMonthTotal = 0
+    @Published var threeMonthAverage = 8679
+    @Published var threeMonthTotal = 8767
     
     @Published var ytdChartData = [MonthlyStepModel]()
     @Published var ytdAverage = 0
@@ -87,7 +87,7 @@ class ChartsViewModel: ObservableObject {
                     self.oneYearTotal = self.oneYearChartData.reduce(0, { $0 + $1.count})
                     
                     self.ytdAverage = self.ytdTotal / Calendar.current.component(.month, from: Date())
-                    self.oneYearTotal = self.oneYearTotal / 12
+                    self.oneYearAverage = self.oneYearTotal / 12
                 }
             case .failure(let failure):
                 print(failure.localizedDescription)
