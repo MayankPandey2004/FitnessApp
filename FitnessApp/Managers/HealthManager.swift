@@ -22,7 +22,24 @@ extension Date {
         components.weekday = 2
         return calendar.date(from: components) ?? Date()
     }
+    
+    func startAndEndOfMonth(using calendar: Calendar = Calendar.current) -> (start: Date, end: Date) {
+        let comps = calendar.dateComponents([.year, .month], from: self)
+        let start = calendar.date(from: comps)!
+        var endComps = DateComponents()
+        endComps.month = 1
+        endComps.second = -1
+        let end = calendar.date(byAdding: endComps, to: start)!
+        return (start, end)
+    }
+
+    static func startAndEndOfMonth(offsetFromNow offset: Int, using calendar: Calendar = Calendar.current) -> (start: Date, end: Date) {
+        let base = calendar.date(byAdding: .month, value: offset, to: Date()) ?? Date()
+        return base.startAndEndOfMonth(using: calendar)
+    }
 }
+
+
 
 extension Double {
     func formattedNumberString() -> String {
@@ -187,5 +204,50 @@ class HealthManager {
             Activity(title: "Stairstepper", subtitle: "This week", image: "stairs", tintColor: .green, amount: "\(stairs)"),
             Activity(title: "Kickboxing", subtitle: "This week", image: "figure.martial.arts", tintColor: .green, amount: "\(kickboxing) mins"),
         ]
+    }
+}
+
+//MARK: ChartView Data
+extension HealthManager {
+    
+    struct YearChartDataResult {
+        let ytd: [MonthlyStepModel]
+        let oneYear: [MonthlyStepModel]
+    }
+    
+    func fetchYTDAndOneYearChartData(completion: @escaping (Result<YearChartDataResult, Error>) -> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let calendar = Calendar.current
+        
+        var oneYearMonths: [MonthlyStepModel] = []
+        var ytdMonths: [MonthlyStepModel] = []
+        
+        for i in 0...11 {
+            let month = calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+            let (startOfMonth, endOfMonth) = month.startAndEndOfMonth()
+            let predicate = HKQuery.predicateForSamples(withStart: startOfMonth, end: endOfMonth)
+            let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+                
+                guard let steps = results?.sumQuantity()?.doubleValue(for: .count()), error == nil else {
+                    completion(.failure(URLError(.badURL)))
+                    return
+                }
+                
+                if i == 0 {
+                    oneYearMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
+                    ytdMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
+                } else {
+                    oneYearMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
+                    if calendar.component(.year, from: Date()) == calendar.component(.year, from: month) {
+                        ytdMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
+                    }
+                }
+                
+                if i == 11 {
+                    completion(.success(YearChartDataResult(ytd: ytdMonths, oneYear: oneYearMonths)))
+                }
+            }
+            healthStore.execute(query)
+        }
     }
 }
