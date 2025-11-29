@@ -4,8 +4,9 @@
 import SwiftUI
 
 struct PaywallView: View {
-    
+    @Environment(\.dismiss) var dismiss
     @StateObject var viewModel = PaywallViewModel()
+    @Binding var isPremium: Bool
     
     var body: some View {
         VStack {
@@ -33,6 +34,8 @@ struct PaywallView: View {
                 ForEach(viewModel.packages) { pkg in
                     Button {
                         print("Selected: \(pkg.title)")
+                        isPremium = true
+                        dismiss()
                     } label: {
                         VStack(spacing: 6) {
                             Text(pkg.title)
@@ -54,6 +57,8 @@ struct PaywallView: View {
             
             Button {
                 print("Restore tapped")
+                isPremium = true
+                dismiss()
             } label: {
                 Text("Restore Purchases")
                     .foregroundColor(.green)
@@ -71,6 +76,8 @@ struct PaywallView: View {
             Spacer(minLength: 20)
         }
         .frame(maxWidth: .infinity, alignment: .top)
+        .padding(.top)
+        .padding(.horizontal)
     }
     
     func featureRow(_ text: String) -> some View {
@@ -81,9 +88,10 @@ struct PaywallView: View {
                 .font(.system(size: 14))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
     }
 }
 
 #Preview {
-    PaywallView()
+    PaywallView(isPremium: .constant(false))
 }

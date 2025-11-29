@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FitnessTabView: View {
     @State var selectedTab = "Home"
+    @State var isPremium = false
     
     init() {
         let appearance = UITabBarAppearance()
@@ -26,7 +27,7 @@ struct FitnessTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeView(isPremium: $isPremium)
                 .tag("Home")
                 
                 .tabItem {
@@ -39,6 +40,9 @@ struct FitnessTabView: View {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Charts")
                 }
+        }
+        .onAppear {
+            
         }
     }
 }
