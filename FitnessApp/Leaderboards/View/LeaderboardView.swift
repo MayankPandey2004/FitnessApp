@@ -9,25 +9,24 @@ import SwiftUI
 import Combine
 
 struct LeaderboardUser: Codable, Identifiable {
-    let id: Int
-    let createdAt: String
+    var id = UUID()
     let username: String
     let count: Int
 }
 
 class LeaderboardViewModel: ObservableObject {
     @Published var mockData = [
-        LeaderboardUser(id: 0, createdAt: "2025-11-20", username: "jason", count: 4124),
-        LeaderboardUser(id: 1, createdAt: "2025-11-19", username: "mayank", count: 3890),
-        LeaderboardUser(id: 2, createdAt: "2025-11-18", username: "alex", count: 3651),
-        LeaderboardUser(id: 3, createdAt: "2025-11-17", username: "sophia", count: 3547),
-        LeaderboardUser(id: 4, createdAt: "2025-11-16", username: "rahul", count: 3398),
-        LeaderboardUser(id: 5, createdAt: "2025-11-15", username: "emma", count: 3312),
-        LeaderboardUser(id: 6, createdAt: "2025-11-14", username: "liam", count: 3230),
-        LeaderboardUser(id: 7, createdAt: "2025-11-13", username: "ananya", count: 3158),
-        LeaderboardUser(id: 8, createdAt: "2025-11-12", username: "daniel", count: 2987),
-        LeaderboardUser(id: 9, createdAt: "2025-11-11", username: "olivia", count: 2841),
-        LeaderboardUser(id: 10, createdAt: "2025-11-10", username: "katie", count: 2795)
+        LeaderboardUser(username: "jason", count: 4124),
+        LeaderboardUser(username: "mayank", count: 3890),
+        LeaderboardUser(username: "alex", count: 3651),
+        LeaderboardUser(username: "sophia", count: 3547),
+        LeaderboardUser(username: "rahul", count: 3398),
+        LeaderboardUser(username: "emma", count: 3312),
+        LeaderboardUser(username: "liam", count: 3230),
+        LeaderboardUser(username: "ananya", count: 3158),
+        LeaderboardUser(username: "daniel", count: 2987),
+        LeaderboardUser(username: "olivia", count: 2841),
+        LeaderboardUser(username: "katie", count: 2795)
     ]
 }
 
@@ -55,7 +54,7 @@ struct LeaderboardView: View {
             LazyVStack(spacing: 24) {
                 ForEach(viewModel.mockData) { person in
                     HStack {
-                        Text("\(person.id).")
+                        Text("1.")
                         
                         Text(person.username)
                         
@@ -72,6 +71,14 @@ struct LeaderboardView: View {
         .fullScreenCover(isPresented: $showTerms) {
             TermsView()
         }
+        .task {
+            do {
+                try await DatabaseManager.shared.postStepCountUpdateFor(username: "jason", count: 1240)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        
     }
 }
 
