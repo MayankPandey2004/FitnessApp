@@ -14,21 +14,6 @@ struct LeaderboardUser: Codable, Identifiable {
     let count: Int
 }
 
-class LeaderboardViewModel: ObservableObject {
-    @Published var mockData = [
-        LeaderboardUser(username: "jason", count: 4124),
-        LeaderboardUser(username: "mayank", count: 3890),
-        LeaderboardUser(username: "alex", count: 3651),
-        LeaderboardUser(username: "sophia", count: 3547),
-        LeaderboardUser(username: "rahul", count: 3398),
-        LeaderboardUser(username: "emma", count: 3312),
-        LeaderboardUser(username: "liam", count: 3230),
-        LeaderboardUser(username: "ananya", count: 3158),
-        LeaderboardUser(username: "daniel", count: 2987),
-        LeaderboardUser(username: "olivia", count: 2841),
-        LeaderboardUser(username: "katie", count: 2795)
-    ]
-}
 
 struct LeaderboardView: View {
     @StateObject var viewModel = LeaderboardViewModel()
@@ -52,7 +37,7 @@ struct LeaderboardView: View {
             .padding()
             
             LazyVStack(spacing: 24) {
-                ForEach(viewModel.mockData) { person in
+                ForEach(viewModel.leaders) { person in
                     HStack {
                         Text("1.")
                         
@@ -71,14 +56,6 @@ struct LeaderboardView: View {
         .fullScreenCover(isPresented: $showTerms) {
             TermsView()
         }
-        .task {
-            do {
-                try await DatabaseManager.shared.postStepCountUpdateFor(username: "jason", count: 1240)
-            } catch {
-                print(error.localizedDescription)
-            }
-        }
-        
     }
 }
 
