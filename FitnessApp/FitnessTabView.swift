@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct FitnessTabView: View {
+    @AppStorage("username") var username: String?
     @State var selectedTab = "Home"
     @State var isPremium = false
+    @State var showTerms = true
     
     init() {
         let appearance = UITabBarAppearance()
@@ -23,7 +25,6 @@ struct FitnessTabView: View {
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
-
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -40,9 +41,15 @@ struct FitnessTabView: View {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Charts")
                 }
+            LeaderboardView(showTerms: $showTerms)
+                .tag("Leaderboard")
+                .tabItem {
+                    Image(systemName: "list.bullet")
+                    Text("Leaderboard")
+                }
         }
         .onAppear {
-            
+            showTerms = username == nil
         }
     }
 }
