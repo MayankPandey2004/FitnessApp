@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct FitnessProfileButton: View {
+struct FitnessProfileItemButton: View {
     @State var image: String
     @State var title: String
     var action: (() -> Void)
@@ -27,5 +27,5 @@ struct FitnessProfileButton: View {
 }
 
 #Preview {
-    FitnessProfileButton(image: "square.and.pencil", title: "Edit Image") {}
+    FitnessProfileItemButton(image: "square.and.pencil", title: "Edit Image") {}
 }
