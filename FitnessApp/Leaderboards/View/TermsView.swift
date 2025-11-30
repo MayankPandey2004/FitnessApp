@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct TermsView: View {
+    @Environment(\.dismiss) var dismiss
     @State var name = ""
     @AppStorage("username") var username: String?
     @State var acceptedTerms = false
-    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         VStack {

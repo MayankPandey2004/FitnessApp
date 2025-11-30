@@ -268,3 +268,24 @@ extension HealthManager {
         }
     }
 }
+
+//MARK: Leaderboard View
+extension HealthManager {
+    
+    func fetchCurrentWeekStepCount(completion: @escaping (Result<Double, Error>) -> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let predicate = HKQuery.predicateForSamples(withStart: .startOfWeek, end: Date())
+        let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+            
+            guard let quantity = results?.sumQuantity(), error == nil else {
+                completion(.failure(URLError(.badURL)))
+                return
+            }
+            
+            let steps = quantity.doubleValue(for: .count())
+            completion(.success(steps))
+        }
+        
+        healthStore.execute(query)
+    }
+}

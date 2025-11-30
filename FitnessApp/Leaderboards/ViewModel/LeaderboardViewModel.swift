@@ -10,7 +10,7 @@ import Combine
 
 class LeaderboardViewModel: ObservableObject {
     
-    @Published var leaders = [LeaderboardUser]()
+    @Published var leaderResult = LeaderboardResults(top10: [], user: nil)
     
     @Published var mockData = [
         LeaderboardUser(username: "jason", count: 4124),
@@ -29,14 +29,18 @@ class LeaderboardViewModel: ObservableObject {
     init() {
         Task {
             do {
-                try await postStepCountUpdateForUser(username: "xcode", count: 123)
-                let result = try await fetchLeaderboards()
-                DispatchQueue.main.async {
-                    self.leaders = result.top10
-                }
+                try await setupLeaderboardData()
             } catch {
                 print(error.localizedDescription)
             }
+        }
+    }
+    
+    func setupLeaderboardData() async throws {
+        try await postStepCountUpdateForUser()
+        let result = try await fetchLeaderboards()
+        DispatchQueue.main.async {
+            self.leaderResult = result
         }
     }
     
@@ -45,12 +49,12 @@ class LeaderboardViewModel: ObservableObject {
         let user: LeaderboardUser?
     }
     
-    func fetchLeaderboards() async throws -> LeaderboardResults {
+    private func fetchLeaderboards() async throws -> LeaderboardResults {
         let leaders = try await DatabaseManager.shared.fetchLeaderBoard()
         let top10 = Array(leaders.sorted(by: {$0.count > $1.count }).prefix(10))
         let username = UserDefaults.standard.string(forKey: "username")
         
-        if let username = username{
+        if let username = username, !top10.contains(where: {$0.username == username}){
             let user = leaders.first(where: {$0.username == username})
             return LeaderboardResults(top10: top10, user: user)
         } else {
@@ -58,7 +62,20 @@ class LeaderboardViewModel: ObservableObject {
         }
     }
     
-    func postStepCountUpdateForUser(username: String, count: Int) async throws {
-        try await DatabaseManager.shared.postStepCountUpdateForUser(leader: LeaderboardUser(username: username, count: count))
+    private func postStepCountUpdateForUser() async throws {
+        guard let username = UserDefaults.standard.string(forKey: "username") else {
+            throw URLError(.badURL)
+        }
+        let steps = try await fetchCurrentWeekStepCount()
+        try await DatabaseManager.shared.postStepCountUpdateForUser(leader: LeaderboardUser(username: username, count: Int(steps)))
+    }
+    
+    private func fetchCurrentWeekStepCount() async throws -> Double {
+        try await withCheckedThrowingContinuation({ continuation in
+            HealthManager.shared.fetchCurrentWeekStepCount { result in
+                continuation.resume(with: result)
+                
+            }
+        })
     }
 }
