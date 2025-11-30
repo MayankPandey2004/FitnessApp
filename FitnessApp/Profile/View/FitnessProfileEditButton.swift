@@ -18,7 +18,6 @@ struct FitnessProfileEditButton: View {
             Text(title)
                 .padding()
                 .frame(maxWidth: 200)
-                .foregroundColor(.red)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
                         .fill(backgroundColor)
