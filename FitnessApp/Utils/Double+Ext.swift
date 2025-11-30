@@ -6,7 +6,7 @@
 //
 
 import Foundation
-
+ 
 extension Double {
     func formattedNumberString() -> String {
         let formatter = NumberFormatter()
