@@ -54,4 +54,22 @@ class ProfileViewModel: ObservableObject {
             self.dismissEdit()
         }
     }
+    
+    func presentEmailApp() {
+        let emailSubject = "Fitness App - Contact Us"
+        let emailRecipient = "mpandey2004@gmail.com"
+        
+        let encodedSubject = emailSubject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedRecipient = emailRecipient.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        
+        let urlString = "mailto:\(encodedRecipient)?subject=\(encodedSubject)"
+        
+        guard let url = URL(string: urlString) else { return }
+        
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else {
+            return
+        }
+    }
 }

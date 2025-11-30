@@ -130,16 +130,29 @@ struct ProfileView: View {
             )
             
             VStack {
+                
                 FitnessProfileItemButton(image: "envelope", title: "Contact Us") {
-                    print("contact")
+                    viewModel.presentEmailApp()
                 }
                 
-                FitnessProfileItemButton(image: "doc", title: "Privacy Policy") {
-                    print("privacy")
+                Link(destination: URL(string: "https://www.linkedin.com/in/mayankpandey2004/")!) {
+                    HStack {
+                        Image(systemName: "doc")
+                        Text("Privacy Policy")
+                    }
+                    .foregroundColor(.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                FitnessProfileItemButton(image: "doc", title: "Terms of Service") {
-                    print("terms")
+                Link(destination: URL(string: "https://www.linkedin.com/in/mayankpandey2004/")!) {
+                    HStack {
+                        Image(systemName: "doc")
+                        Text("Terms of Use")
+                    }
+                    .foregroundColor(.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .background(
