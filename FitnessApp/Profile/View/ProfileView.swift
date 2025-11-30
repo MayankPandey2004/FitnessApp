@@ -8,21 +8,12 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @AppStorage("profileName") var profileName: String?
-    @AppStorage("profileImage") var profileImage: String?
+    @StateObject var viewModel = ProfileViewModel()
     
-    @State private var isEditingName = false
-    @State private var currentName = ""
-    
-    @State private var selectedImage: String?
-    @State private var isEditingImage = false
-    
-    var images = ["profile1", "profile2", "profile3", "profile4", "profile5", "profile6", "profile7"]
-
     var body: some View {
         VStack {
             HStack(spacing: 16) {
-                Image(profileImage ?? "profile1")
+                Image(viewModel.profileImage ?? "profile1")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 100, height: 100)
@@ -33,8 +24,7 @@ struct ProfileView: View {
                     )
                     .onTapGesture {
                         withAnimation {
-                            isEditingName = false
-                            isEditingImage = true
+                            viewModel.presentEditImage()
                         }
                     }
                 VStack(alignment: .leading) {
@@ -43,13 +33,13 @@ struct ProfileView: View {
                         .foregroundColor(.gray)
                         .minimumScaleFactor(0.5)
                     
-                    Text(profileName ?? "Name")
+                    Text(viewModel.profileName ?? "Name")
                         .font(.title)
                 }
             }
             
-            if isEditingName {
-                TextField("Name...", text: $currentName)
+            if viewModel.isEditingName {
+                TextField("Name...", text: $viewModel.currentName)
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 10)
@@ -58,15 +48,14 @@ struct ProfileView: View {
                 HStack {
                     FitnessProfileEditButton(title: "Cancel", backgroundColor: .gray.opacity(0.1)) {
                         withAnimation {
-                            isEditingName = false
+                            viewModel.dismissEdit()
                         }
                     }
                     .foregroundColor(.red)
                     
                     FitnessProfileEditButton(title: "Done", backgroundColor: .primary) {
                         withAnimation {
-                            profileName = currentName
-                            isEditingName = false
+                            viewModel.setNewName()
                         }
                     }
                     .foregroundColor(Color(uiColor: .systemBackground))
@@ -74,13 +63,13 @@ struct ProfileView: View {
                 }
             }
             
-            if isEditingImage {
+            if viewModel.isEditingImage {
                 ScrollView(.horizontal) {
                     HStack {
-                        ForEach(images, id: \.self) { image in
+                        ForEach(viewModel.images, id: \.self) { image in
                             Button {
                                 withAnimation {
-                                    selectedImage = image
+                                    viewModel.didSelectImage(name: image)
                                 }
                             } label: {
                                 VStack {
@@ -89,7 +78,7 @@ struct ProfileView: View {
                                         .scaledToFit()
                                         .frame(width: 100, height: 100)
                                         .padding()
-                                    if selectedImage == image {
+                                    if viewModel.selectedImage == image {
                                         Circle()
                                             .frame(width: 16, height: 16)
                                             .foregroundColor(.primary)
@@ -108,8 +97,7 @@ struct ProfileView: View {
                 
                 Button {
                     withAnimation {
-                        profileImage = selectedImage
-                        isEditingImage = false
+                        viewModel.setNewImage()
                     }
                 } label: {
                     Text("Done")
@@ -126,15 +114,13 @@ struct ProfileView: View {
             
             VStack {
                 FitnessProfileItemButton(image: "square.and.pencil", title: "Edit Name") {
-                    isEditingName = true
-                    isEditingImage = false
+                    viewModel.presentEditName()
                 }
                 
                 FitnessProfileItemButton(image: "square.and.pencil", title: "Edit Image") {
                     print("image")
                     withAnimation {
-                        isEditingName = false
-                        isEditingImage = true
+                        viewModel.presentEditImage()
                     }
                 }
             }
@@ -165,7 +151,7 @@ struct ProfileView: View {
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
-            selectedImage = profileImage
+            viewModel.selectedImage = viewModel.profileImage
         }
     }
 }
