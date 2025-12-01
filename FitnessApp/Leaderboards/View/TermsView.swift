@@ -5,7 +5,7 @@
 //  Created by Mayank Pandey on 30/11/25.
 //
 
-import SwiftUI
+import SwiftUI 
 
 struct TermsView: View {
     @Environment(\.dismiss) var dismiss

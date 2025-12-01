@@ -9,40 +9,18 @@ import Combine
 import SwiftUI
 
 class ChartsViewModel: ObservableObject {
-    @Published var mockWeekChartData = [
-        DailyStepModel(date: Date(), count: 12315),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -2, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -3, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -4, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -5, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -6, to: Date())!, count: 9775),
-    ]
-    
-    @Published var mockYTDChartData = [
-        DailyStepModel(date: Date(), count: 12315),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -1, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -2, to: Date())!, count: 4533),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, count: 45345),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -4, to: Date())!, count: 3422),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -5, to: Date())!, count: 32445),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -6, to: Date())!, count: 2344),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -7, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -8, to: Date())!, count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .month, value: -9, to: Date())!, count: 9775)
-    ]
 
-    @Published var oneWeekAverage = 25455
-    @Published var oneWeekTotal = 23456
+    @Published var oneWeekChartData = [DailyStepModel]()
+    @Published var oneWeekAverage = 0
+    @Published var oneWeekTotal = 0
     
-    @Published var mockOneMonthData =
-    [DailyStepModel]()
-    @Published var oneMonthAverage = 6567
-    @Published var oneMonthTotal = 7609
+    @Published var oneMonthChartData = [DailyStepModel]()
+    @Published var oneMonthAverage = 0
+    @Published var oneMonthTotal = 0
     
-    @Published var mockThreeMonthData = [DailyStepModel]()
-    @Published var threeMonthAverage = 8679
-    @Published var threeMonthTotal = 8767
+    @Published var threeMonthChartData = [DailyStepModel]()
+    @Published var threeMonthAverage = 0
+    @Published var threeMonthTotal = 0
     
     @Published var ytdChartData = [MonthlyStepModel]()
     @Published var ytdAverage = 0
@@ -55,24 +33,58 @@ class ChartsViewModel: ObservableObject {
     let healthManager = HealthManager.shared
  
     init() {
-        let mockOneMonth = self.mockDataForDays(days: 30)
-        let mockThreeMonths  = self.mockDataForDays(days: 90)
-        DispatchQueue.main.async {
-            self.mockThreeMonthData = mockThreeMonths
-            self.mockOneMonthData = mockOneMonth
-        }
+        fetchOneWeekStepData()
+        fetchOneMonthStepData()
+        fetchThreeMonthStepData()
         fetchYTDAndOneYearChartData()
     }
     
-    func mockDataForDays(days: Int) -> [DailyStepModel] {
-        var mockData = [DailyStepModel]()
-        for day in 0..<days {
-            let currentDate = Calendar.current.date(byAdding: .day, value: -day, to: Date())!
-            let randomStepCount = Int.random(in: 500...15000)
-            let dailyStepData = DailyStepModel(date: currentDate, count: randomStepCount)
-            mockData.append(dailyStepData)
+    func fetchOneWeekStepData() {
+        healthManager.fetchDailySteps(startDate: .oneWeekAgo) { result in
+            switch result {
+            case .success(let steps):
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.oneWeekChartData = steps
+                    
+                    (self.oneWeekTotal, self.oneWeekAverage) = self.calculateAverageAndTotalFromData(steps: steps)
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
         }
-        return mockData
+    }
+    
+    func fetchOneMonthStepData() {
+        healthManager.fetchDailySteps(startDate: .oneMonthAgo) { result in
+            switch result {
+            case .success(let steps):
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.oneMonthChartData = steps
+                    
+                    (self.oneMonthTotal, self.oneMonthAverage) = self.calculateAverageAndTotalFromData(steps: steps)
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
+    }
+    
+    func fetchThreeMonthStepData() {
+        healthManager.fetchDailySteps(startDate: .threeMonthAgo) { result in
+            switch result {
+            case .success(let steps):
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.threeMonthChartData = steps
+                    
+                    (self.threeMonthTotal, self.threeMonthAverage) = self.calculateAverageAndTotalFromData(steps: steps)
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
     }
     
     func fetchYTDAndOneYearChartData() {
@@ -93,5 +105,13 @@ class ChartsViewModel: ObservableObject {
                 print(failure.localizedDescription)
             }
         }
+    }
+}
+
+extension ChartsViewModel {
+    func calculateAverageAndTotalFromData(steps: [DailyStepModel]) -> (Int, Int) {
+        let total = steps.reduce(0) { $0 + Int($1.count) }
+        let avg = steps.isEmpty ? 0 : total / steps.count
+        return (total, avg)
     }
 }

@@ -8,6 +8,18 @@
 import Foundation
 
 extension Date {
+    static var oneWeekAgo: Date {
+        Calendar.current.date(byAdding: .day, value: -6, to: Date())!
+    }
+
+    static var oneMonthAgo: Date {
+        Calendar.current.date(byAdding: .day, value: -29, to: Date())!
+    }
+
+    static var threeMonthAgo: Date {
+        Calendar.current.date(byAdding: .day, value: -89, to: Date())!
+    }
+    
     static var startOfDay: Date {
         let  calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())

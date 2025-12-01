@@ -64,21 +64,42 @@ class HealthManager {
 
     
     func fetchTodayExerciseTime(completion: @escaping (Result<Double, Error>) -> ()) {
-        let exercise = HKQuantityType(.appleExerciseTime)
-        let predicate = HKQuery.predicateForSamples(withStart: .startOfDay, end: Date())
-        let query = HKStatisticsQuery(quantityType: exercise, quantitySamplePredicate: predicate) { _, results, error in
-            
-            guard let quantity = results?.sumQuantity(), error == nil else {
-                completion(.failure(URLError(.badURL)))
+
+        let now = Date()
+        let startOfDay = Calendar.current.startOfDay(for: now)
+
+        let type = HKQuantityType(.appleExerciseTime)
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startOfDay,
+            end: now,
+            options: .strictStartDate
+        )
+
+        let query = HKStatisticsQuery(
+            quantityType: type,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) { _, results, error in
+
+            if let error = error {
+                print(error.localizedDescription)
+                completion(.failure(error))
                 return
             }
-            
-            let exerciseTime = quantity.doubleValue(for: .minute())
-            completion(.success(exerciseTime))
+
+            guard let quantity = results?.sumQuantity() else {
+                completion(.success(0))
+                return
+            }
+
+            let minutes = quantity.doubleValue(for: .minute())
+            completion(.success(minutes))
         }
-        
+
         healthStore.execute(query)
     }
+
     
     func fetchTodayStandHours(completion: @escaping (Result<Int, Error>) -> ()) {
         let stand = HKCategoryType(.appleStandHour)
@@ -174,6 +195,42 @@ extension HealthManager {
         let oneYear: [MonthlyStepModel]
     }
     
+    func fetchDailySteps(startDate: Date, completion: @escaping (Result<[DailyStepModel], Error>) -> Void) {
+        let stepsType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: Date())
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepsType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: startDate,
+            intervalComponents: DateComponents(day: 1)
+        )
+
+        query.initialResultsHandler = { _, results, error in
+
+            guard let statsCollection = results, error == nil else {
+                completion(.failure(error ?? URLError(.badURL)))
+                return
+            }
+
+            var dailyModels: [DailyStepModel] = []
+
+            statsCollection.enumerateStatistics(from: startDate, to: Date()) { stats, _ in
+                let count = stats.sumQuantity()?.doubleValue(for: .count()) ?? 0
+                dailyModels.append(
+                    DailyStepModel(date: stats.startDate, count: Int(count))
+                )
+            }
+
+            completion(.success(dailyModels))
+        }
+
+        healthStore.execute(query)
+    }
+
+    
     func fetchYTDAndOneYearChartData(completion: @escaping (Result<YearChartDataResult, Error>) -> Void) {
         let steps = HKQuantityType(.stepCount)
         let calendar = Calendar.current
@@ -228,6 +285,123 @@ extension HealthManager {
             completion(.success(steps))
         }
         
+        healthStore.execute(query)
+    }
+    
+    func fetchWorkoutsForMonth(month: Date, completion: @escaping (Result<[Workout], Error>) -> Void) {
+
+        let (startOfMonth, endOfMonth) = month.startAndEndOfMonth()
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startOfMonth,
+            end: endOfMonth,
+            options: .strictStartDate
+        )
+
+        let workoutType = HKObjectType.workoutType()
+
+        let query = HKSampleQuery(
+            sampleType: workoutType,
+            predicate: predicate,
+            limit: HKObjectQueryNoLimit,
+            sortDescriptors: [
+                NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+            ]
+        ) { _, results, error in
+
+            guard let hkWorkouts = results as? [HKWorkout], error == nil else {
+                completion(.failure(error ?? URLError(.badURL)))
+                return
+            }
+
+            let mapped: [Workout] = hkWorkouts.map { hk in
+
+                let durationMinutes = max(1, Int(hk.duration / 60))
+
+                // Modern HK calories API
+                let caloriesBurned = Int(
+                    hk.statistics(for: HKQuantityType(.activeEnergyBurned))?
+                        .sumQuantity()?
+                        .doubleValue(for: .kilocalorie()) ?? 0
+                )
+
+                let dateFormatted = hk.startDate.formatted(date: .abbreviated, time: .shortened)
+
+                return Workout(
+                    id: hk.uuid.hashValue,
+                    title: hk.workoutActivityType.displayName,
+                    image: hk.workoutActivityType.sfSymbolName,
+                    tintColor: .blue,
+                    duration: "\(durationMinutes) mins",
+                    date: dateFormatted,
+                    calories: "\(caloriesBurned) kcal"
+                )
+            }
+
+            completion(.success(mapped))
+        }
+
+        healthStore.execute(query)
+    }
+    
+    func fetchAllWorkouts(completion: @escaping (Result<[Workout], Error>) -> Void) {
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: Date.distantPast,
+            end: Date(),
+            options: []
+        )
+
+        let workoutType = HKObjectType.workoutType()
+
+        let query = HKSampleQuery(
+            sampleType: workoutType,
+            predicate: predicate,
+            limit: HKObjectQueryNoLimit,
+            sortDescriptors: [
+                NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+            ]
+        ) { _, results, error in
+            
+            guard let hkWorkouts = results as? [HKWorkout], error == nil else {
+                completion(.failure(error ?? URLError(.badURL)))
+                return
+            }
+
+            let mapped: [Workout] = hkWorkouts.map { hk in
+                let durationMinutes = max(1, Int(hk.duration / 60))
+
+                let caloriesBurned = Int(
+                    hk.statistics(for: HKQuantityType(.activeEnergyBurned))?
+                        .sumQuantity()?
+                        .doubleValue(for: .kilocalorie()) ?? 0
+                )
+
+                return Workout(
+                    id: hk.uuid.hashValue,
+                    title: hk.workoutActivityType.displayName,
+                    image: hk.workoutActivityType.sfSymbolName,
+                    tintColor: .blue,
+                    duration: "\(durationMinutes) mins",
+                    date: hk.startDate.formatted(date: .abbreviated, time: .shortened),
+                    calories: "\(caloriesBurned) kcal"
+                )
+            }
+
+            let sorted = mapped.sorted { w1, w2 in
+                let w1IsZero = (w1.duration == "0 mins" || w1.calories == "0 kcal")
+                let w2IsZero = (w2.duration == "0 mins" || w2.calories == "0 kcal")
+
+                if w1IsZero != w2IsZero {
+                    return !w1IsZero
+                }
+
+                return true
+            }
+
+            completion(.success(sorted))
+        }
+
         healthStore.execute(query)
     }
 }

@@ -20,7 +20,7 @@ struct ChartsView: View {
                     VStack {
                         ChartDataView(average: viewModel.oneWeekAverage, total: viewModel.oneWeekTotal)
                         Chart {
-                            ForEach(viewModel.mockWeekChartData) { data in
+                            ForEach(viewModel.oneWeekChartData) { data in
                                 BarMark(
                                     x: .value("Date", data.date, unit: .day),
                                     y: .value("Steps", data.count)
@@ -28,11 +28,12 @@ struct ChartsView: View {
                             }
                         }
                     }
+
                 case .oneMonth:
                     VStack {
                         ChartDataView(average: viewModel.oneMonthAverage, total: viewModel.oneMonthTotal)
                         Chart {
-                            ForEach(viewModel.mockOneMonthData) { data in
+                            ForEach(viewModel.oneMonthChartData) { data in
                                 BarMark(
                                     x: .value("Date", data.date, unit: .day),
                                     y: .value("Steps", data.count)
@@ -40,11 +41,12 @@ struct ChartsView: View {
                             }
                         }
                     }
+
                 case .threeMonth:
                     VStack {
                         ChartDataView(average: viewModel.threeMonthAverage, total: viewModel.threeMonthTotal)
                         Chart {
-                            ForEach(viewModel.mockThreeMonthData) { data in
+                            ForEach(viewModel.threeMonthChartData) { data in
                                 LineMark(
                                     x: .value("Date", data.date, unit: .day),
                                     y: .value("Steps", data.count)
@@ -52,6 +54,7 @@ struct ChartsView: View {
                             }
                         }
                     }
+
                 case .yearToDate:
                     VStack {
                         ChartDataView(average: viewModel.ytdAverage, total: viewModel.ytdTotal)
@@ -64,6 +67,7 @@ struct ChartsView: View {
                             }
                         }
                     }
+
                 case .oneYear:
                     VStack {
                         ChartDataView(average: viewModel.oneYearAverage, total: viewModel.oneYearTotal)
