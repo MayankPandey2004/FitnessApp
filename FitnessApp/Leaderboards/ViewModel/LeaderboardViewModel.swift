@@ -12,20 +12,6 @@ class LeaderboardViewModel: ObservableObject {
     
     @Published var leaderResult = LeaderboardResults(top10: [], user: nil)
     
-    @Published var mockData = [
-        LeaderboardUser(username: "jason", count: 4124),
-        LeaderboardUser(username: "mayank", count: 3890),
-        LeaderboardUser(username: "alex", count: 3651),
-        LeaderboardUser(username: "sophia", count: 3547),
-        LeaderboardUser(username: "rahul", count: 3398),
-        LeaderboardUser(username: "emma", count: 3312),
-        LeaderboardUser(username: "liam", count: 3230),
-        LeaderboardUser(username: "ananya", count: 3158),
-        LeaderboardUser(username: "daniel", count: 2987),
-        LeaderboardUser(username: "olivia", count: 2841),
-        LeaderboardUser(username: "katie", count: 2795)
-    ]
-    
     init() {
         Task {
             do {
