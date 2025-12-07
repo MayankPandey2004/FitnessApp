@@ -8,12 +8,6 @@
 import SwiftUI
 import Combine
 
-struct LeaderboardUser: Codable, Identifiable {
-    var id = UUID()
-    let username: String
-    let count: Int
-}
-
 
 struct LeaderboardView: View {
     @StateObject var viewModel = LeaderboardViewModel()
