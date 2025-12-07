@@ -19,6 +19,7 @@ struct LeaderboardView: View {
             Text("Leaderboard")
                 .font(.largeTitle)
                 .bold()
+                .padding(.top)
             HStack {
                 Text("Name")
                 
@@ -29,7 +30,7 @@ struct LeaderboardView: View {
             }
             .padding()
             
-            LazyVStack(spacing: 24) {
+            LazyVStack(spacing: 16) {
                 ForEach(Array(viewModel.leaderResult.top10.enumerated()), id: \.element.id) { idx, person in
                     HStack {
                         Text("\(idx + 1).")
@@ -48,7 +49,7 @@ struct LeaderboardView: View {
                         Text("\(person.count)")
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 5)
                 }
             }
             
@@ -56,7 +57,7 @@ struct LeaderboardView: View {
                 Image(systemName: "ellipsis")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 48, height: 48)
+                    .frame(width: 48, height: 30)
                     .foregroundColor(.gray.opacity(0.5))
                 
                 HStack {
