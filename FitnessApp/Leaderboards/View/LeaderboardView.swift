@@ -53,22 +53,35 @@ struct LeaderboardView: View {
                 }
             }
             
-            if let user = viewModel.leaderResult.user {
+            if let user = viewModel.leaderResult.user,
+               let rank = viewModel.leaderResult.rank {
+
                 Image(systemName: "ellipsis")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 48, height: 30)
                     .foregroundColor(.gray.opacity(0.5))
-                
+
                 HStack {
+                    Text("\(rank).") 
+                        .bold()
+                    
                     Text(user.username)
-                    
+
+                    if username?.lowercased().trimmingCharacters(in: .whitespaces)
+                        == user.username.lowercased().trimmingCharacters(in: .whitespaces) {
+
+                        Image(systemName: "crown.fill")
+                            .foregroundColor(.yellow)
+                    }
+
                     Spacer()
-                    
+
                     Text("\(user.count)")
                 }
                 .padding(.horizontal)
             }
+
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .fullScreenCover(isPresented: $showTerms) {

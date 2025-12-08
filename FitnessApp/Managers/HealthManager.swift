@@ -318,7 +318,6 @@ extension HealthManager {
 
                 let durationMinutes = max(1, Int(hk.duration / 60))
 
-                // Modern HK calories API
                 let caloriesBurned = Int(
                     hk.statistics(for: HKQuantityType(.activeEnergyBurned))?
                         .sumQuantity()?

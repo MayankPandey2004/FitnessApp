@@ -10,7 +10,7 @@ import Combine
 
 class LeaderboardViewModel: ObservableObject {
     
-    @Published var leaderResult = LeaderboardResults(top10: [], user: nil)
+    @Published var leaderResult = LeaderboardResults(top10: [], user: nil, rank: nil)
     
     init() {
         Task {
@@ -30,23 +30,26 @@ class LeaderboardViewModel: ObservableObject {
         }
     }
     
-    struct LeaderboardResults {
-        let top10: [LeaderboardUser]
-        let user: LeaderboardUser?
-    }
-    
     private func fetchLeaderboards() async throws -> LeaderboardResults {
         let leaders = try await DatabaseManager.shared.fetchLeaderBoard()
-        let top10 = Array(leaders.sorted(by: {$0.count > $1.count }).prefix(10))
-        let username = UserDefaults.standard.string(forKey: "username")
+
+        let sorted = leaders.sorted(by: { $0.count > $1.count })
+        let top10 = Array(sorted.prefix(10))
+
+        guard let username = UserDefaults.standard.string(forKey: "username") else {
+            return LeaderboardResults(top10: top10, user: nil, rank: nil)
+        }
         
-        if let username = username, !top10.contains(where: {$0.username == username}){
-            let user = leaders.first(where: {$0.username == username})
-            return LeaderboardResults(top10: top10, user: user)
+        if let index = sorted.firstIndex(where: { $0.username == username }) {
+            let user = sorted[index]
+            let rank = index + 1
+
+            return LeaderboardResults(top10: top10, user: user, rank: rank)
         } else {
-            return LeaderboardResults(top10: top10, user: nil)
+            return LeaderboardResults(top10: top10, user: nil, rank: nil)
         }
     }
+
     
     private func postStepCountUpdateForUser() async throws {
         guard let username = UserDefaults.standard.string(forKey: "username") else {
