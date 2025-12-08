@@ -54,7 +54,8 @@ struct LeaderboardView: View {
             }
             
             if let user = viewModel.leaderResult.user,
-               let rank = viewModel.leaderResult.rank {
+               let rank = viewModel.leaderResult.rank,
+               rank > 10 {
 
                 Image(systemName: "ellipsis")
                     .resizable()
@@ -63,7 +64,7 @@ struct LeaderboardView: View {
                     .foregroundColor(.gray.opacity(0.5))
 
                 HStack {
-                    Text("\(rank).") 
+                    Text("\(rank).")
                         .bold()
                     
                     Text(user.username)
