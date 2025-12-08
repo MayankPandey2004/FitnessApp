@@ -147,7 +147,7 @@ class HealthManager {
             } 
             
             var runningCount: Int = 0
-            var steppingCount: Int = 0
+            var strengthCount: Int = 0
             var soccerCount: Int = 0
             var basketballCount: Int = 0
             var stairCount: Int = 0
@@ -158,7 +158,7 @@ class HealthManager {
                 if workout.workoutActivityType == .running {
                     runningCount += duration
                 } else if workout.workoutActivityType == .traditionalStrengthTraining {
-                    steppingCount += duration
+                    strengthCount += duration
                 } else if workout.workoutActivityType == .soccer {
                     soccerCount += duration
                 } else if workout.workoutActivityType == .basketball {
@@ -170,7 +170,7 @@ class HealthManager {
                 }
             }
             
-            completion(.success(self.generateActivitiesFromDurations(running: runningCount, strength: steppingCount, soccer: soccerCount, basketball: basketballCount, stairs: stairCount, kickboxing: kickboxingCount)))
+            completion(.success(self.generateActivitiesFromDurations(running: runningCount, strength: strengthCount, soccer: soccerCount, basketball: basketballCount, stairs: stairCount, kickboxing: kickboxingCount)))
         }
         healthStore.execute(query)
     }
@@ -232,38 +232,55 @@ extension HealthManager {
 
     
     func fetchYTDAndOneYearChartData(completion: @escaping (Result<YearChartDataResult, Error>) -> Void) {
-        let steps = HKQuantityType(.stepCount)
+        let stepsType = HKQuantityType(.stepCount)
         let calendar = Calendar.current
         
         var oneYearMonths: [MonthlyStepModel] = []
         var ytdMonths: [MonthlyStepModel] = []
         
-        for i in 0...11 {
-            let month = calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        let group = DispatchGroup()
+        let lock = NSLock()
+        
+        for i in 0..<12 {
+            guard let month = calendar.date(byAdding: .month, value: -i, to: Date()) else { continue }
+            
             let (startOfMonth, endOfMonth) = month.startAndEndOfMonth()
+            
             let predicate = HKQuery.predicateForSamples(withStart: startOfMonth, end: endOfMonth)
-            let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+            
+            group.enter()
+            
+            let query = HKStatisticsQuery(quantityType: stepsType, quantitySamplePredicate: predicate) { _, results, error in
                 
-                guard let steps = results?.sumQuantity()?.doubleValue(for: .count()), error == nil else {
-                    completion(.failure(URLError(.badURL)))
+                defer { group.leave() }
+                
+                guard let stepCount = results?.sumQuantity()?.doubleValue(for: .count()),
+                      error == nil else {
+                    completion(.failure(error ?? URLError(.badURL)))
                     return
                 }
                 
-                if i == 0 {
-                    oneYearMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
-                    ytdMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
-                } else {
-                    oneYearMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
-                    if calendar.component(.year, from: Date()) == calendar.component(.year, from: month) {
-                        ytdMonths.append(MonthlyStepModel(date: month, count: Int(steps)))
-                    }
-                }
+                let model = MonthlyStepModel(date: month, count: Int(stepCount))
                 
-                if i == 11 {
-                    completion(.success(YearChartDataResult(ytd: ytdMonths, oneYear: oneYearMonths)))
+                lock.lock()
+                oneYearMonths.append(model)
+                
+                if calendar.component(.year, from: Date()) == calendar.component(.year, from: month) {
+                    ytdMonths.append(model)
                 }
+                lock.unlock()
             }
+            
             healthStore.execute(query)
+        }
+        
+        group.notify(queue: .main) {
+            oneYearMonths.sort { $0.date < $1.date }
+            ytdMonths.sort { $0.date < $1.date }
+            
+            completion(.success(
+                YearChartDataResult(ytd: ytdMonths, oneYear: oneYearMonths)
+            ))
         }
     }
 }
@@ -368,7 +385,7 @@ extension HealthManager {
             }
 
             let mapped: [Workout] = hkWorkouts.map { hk in
-                let durationMinutes = max(1, Int(hk.duration / 60))
+                let durationMinutes = Int(hk.duration / 60)
 
                 let caloriesBurned = Int(
                     hk.statistics(for: HKQuantityType(.activeEnergyBurned))?
